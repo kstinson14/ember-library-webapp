@@ -1,1 +1,15 @@
+<div class="form-horizontal form-group form-group-lg row">
+  <div class="col-xs-10 col-xs-offset-1 col-sm-6 col-sm-offset-1 col-md-5 col-md-offset-2">
+    {{input type="email" class="form-control" value=emailAddress placeholder="Please type your e-mail address." autofocus="autofocus"}}
+  </div>
+  <div class="col-xs-10 col-xs-offset-1 col-sm-6 col-sm-offset-1 col-md-5 col-md-offset-2">
+    {{textarea class="form-control" placeholder="Your message. (At least 5 characters.)" rows="7" value=message}}
+  </div>
+  <div class="col-xs-10 col-xs-offset-1 col-sm-offset-0 col-sm-4 col-md-3">
+      <button disabled={{isDisabled}} {{action 'sendMessage'}} class="btn btn-primary btn-lg btn-block">Send Message</button>
+  </div>
+</div>
+{{#if responseMessage}}
+   <div class="alert alert-success">{{responseMessage}}</div>
+ {{/if}}
 {{outlet}}
