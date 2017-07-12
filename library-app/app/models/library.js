@@ -20,5 +20,5 @@ export default DS.Model.extend({
   _fullAddress() {
     return `${Faker.address.streetAddress()}, ${Faker.address.city()}`;
   }
-  
+
 });

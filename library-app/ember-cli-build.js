@@ -6,7 +6,8 @@ module.exports = function(defaults) {
     // Add options here
     amd : {
     // Specify the type of AMD loader. Either a CDN path or a local loader ('dojo' or 'requirejs')
-      loader: 'https://js.arcgis.com/4.0beta3/',
+    loader: 'https://js.arcgis.com/4.4/',
+
       configPath: 'config/dojo-config.js',
       packages: [
         'esri','dojo','dojox','dijit',
