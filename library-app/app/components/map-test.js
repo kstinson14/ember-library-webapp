@@ -7,23 +7,16 @@ import Locator from 'esri/tasks/Locator';
 import arrayUtils from 'dojo/_base/array';
 import Point from 'esri/geometry/Point'
 import Map from 'esri/Map';
+import PopupTemplate from 'esri/PopupTemplate';
+import Legend from 'esri/widgets/Legend';
+
 
 export default Ember.Component.extend({
   classNames: ['viewDiv'],
-  mapService: Ember.inject.service('map'),
+  map: null,
 
 
   didInsertElement()
-  {
-    let map = this.get('map');
-    if (!map)
-    {
-      map = this.get('mapService').loadMap();
-      this.set('map', map);
-    }
-  },
-
-  getFeatureLayer: function(map)
   {
     var layer, legend;
     var fields = [
@@ -44,21 +37,42 @@ export default Ember.Component.extend({
       }
     ];
     this.set('fields', fields);
-
+    var popupTemplate = new PopupTemplate(
+    );
     var template = {
-      title: "Title",
+      title: "{title}",
       content: "<ul><li>{address}</li></ul>",
       fieldInfos: [{
         fieldName: "address",
 
       }]
     };
+    popupTemplate = {
+      title: "{title} ",
+      content: [{
+        type: "fields",
+        fieldInfos: [{
+          fieldName: "address",
+          label: "Location",
+          visible: true
+        }]
+      }],
+      fieldInfos: [{}]
+    };
+
+    var map = new Map({
+      basemap: "dark-gray"
+    });
+    this.set('map', map);
 
 
 
-
-
-
+    var view = new MapView({
+      container: this.elementId,
+      map: map,
+      center: [-70.25, 43.65],
+      zoom: 13
+    });
 
 
     let renderer = new SimpleRenderer({
@@ -77,7 +91,7 @@ export default Ember.Component.extend({
 
 
     var graphics = this.createGraphics(map);
-
+    console.log(popupTemplate);
     var l = this.createLayers(graphics, fields, renderer, template);
     map.add(l);
 
@@ -137,35 +151,7 @@ createLayers: function(graphics, fields, renderer, popUpTemplate)
     return layer;
 
 
-},
-
-
-
-
-  createView: function()
-  {
-    
-    let map = this.get('map');
-
-    var l = this.getFeatureLayer(map);
-      map.add(l);
-      let view = new MapView({
-        map,
-        container: this.elementId,
-        center: [-70.25, 43.65],
-        zoom: 13
-      });
-
-      view.then(x => {
-
-        this.set('view', x);
-
-
-      });
-
-
-
-  }.observes('map')
+}
 
 
 });
