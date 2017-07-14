@@ -9,13 +9,37 @@ import Point from 'esri/geometry/Point'
 import Map from 'esri/Map';
 import PopupTemplate from 'esri/PopupTemplate';
 import Legend from 'esri/widgets/Legend';
-
+import Query from 'esri/tasks/support/Query';
 
 export default Ember.Component.extend({
   classNames: ['viewDiv'],
   map: null,
+  searchTerm: '',
+  view: null,
+  layer: null,
+  actions: {
 
-
+  search: function()
+  {
+    const searchTerm = this.get('searchTerm');
+    var query = new Query();
+    console.log('i');
+    query.where = "LOWER(title) LIKE LOWER('%" + searchTerm + "%')";
+    console.log('i');
+    const getMatchingGraphics = new Promise((resolve, reject) => {
+      return this.get('view').whenLayerView(this.get('layer')).then(function(layerView){
+        console.log('i');
+        //resolve(layerView.featuresView.graphics.filter(graphic => graphic.attributes && graphic.attributes["title"].toLowerCase().contains(searchTerm.toLowerCase())).toArray()); 
+        resolve(layerView.queryFeatures(query));
+        console.log('j');
+      });
+    });
+    getMatchingGraphics.then(function(graphics){
+      console.log('k');
+      this.get('layer').source = graphics;
+    });
+  }
+},
   didInsertElement()
   {
     var layer, legend;
@@ -73,7 +97,7 @@ export default Ember.Component.extend({
       center: [-70.25, 43.65],
       zoom: 13
     });
-
+    this.set('view', view);
 
     let renderer = new SimpleRenderer({
       symbol: new SimpleMarkerSymbol({
@@ -139,11 +163,9 @@ export default Ember.Component.extend({
     createGraphics.then((geometry) => {
 
       var l = this.createLayers(geometry, fields, renderer, template);
+      this.set('layer', l);
       map.add(l);
     });
-
-
-
 },
 
 
