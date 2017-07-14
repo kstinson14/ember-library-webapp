@@ -7,23 +7,16 @@ import Locator from 'esri/tasks/Locator';
 import arrayUtils from 'dojo/_base/array';
 import Point from 'esri/geometry/Point'
 import Map from 'esri/Map';
+import PopupTemplate from 'esri/PopupTemplate';
+import Legend from 'esri/widgets/Legend';
+
 
 export default Ember.Component.extend({
   classNames: ['viewDiv'],
-  mapService: Ember.inject.service('map'),
+  map: null,
 
 
   didInsertElement()
-  {
-    let map = this.get('map');
-    if (!map)
-    {
-      map = this.get('mapService').loadMap();
-      this.set('map', map);
-    }
-  },
-
-  getFeatureLayer: function(map)
   {
     var layer, legend;
     var fields = [
@@ -44,21 +37,42 @@ export default Ember.Component.extend({
       }
     ];
     this.set('fields', fields);
-
+    var popupTemplate = new PopupTemplate(
+    );
     var template = {
-      title: "Title",
+      title: "{title}",
       content: "<ul><li>{address}</li></ul>",
       fieldInfos: [{
         fieldName: "address",
 
       }]
     };
+    popupTemplate = {
+      title: "{title} ",
+      content: [{
+        type: "fields",
+        fieldInfos: [{
+          fieldName: "address",
+          label: "Location",
+          visible: true
+        }]
+      }],
+      fieldInfos: [{}]
+    };
+
+    var map = new Map({
+      basemap: "dark-gray"
+    });
+    this.set('map', map);
 
 
 
-
-
-
+    var view = new MapView({
+      container: this.elementId,
+      map: map,
+      center: [-70.25, 43.65],
+      zoom: 13
+    });
 
 
     let renderer = new SimpleRenderer({
@@ -76,15 +90,69 @@ export default Ember.Component.extend({
     this.set('renderer', renderer);
 
 
-    var graphics = this.createGraphics(map);
+    const promise1 = new Promise((resolve, reject) => {
+      let libraries = this.get('libraries');
+      console.log("test");
+      var locator = new Locator("https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 
-    var l = this.createLayers(graphics, fields, renderer, template);
-    map.add(l);
+      var i = 0;
+      var totalLibraries = libraries.get('length');
+      var geometryArray = [];
+      libraries.forEach(function(library)
+      { console.log("t");
+        i++;
+          var address = {"SingleLine":library.get('address')};
+          var params = {address: address, searchExtent: map.extent};
+          locator.outSpatialReference= map.spatialReference;
+          var p = new Point({
+            x: -70.25 + i,
+            y: 43.65
+          });
+          locator.addressToLocations(params).then(function(candidates){
+            console.log("add");
+            candidates.forEach(function(candidate){
+              console.log("candidate");
+              if (candidate.score > 80)
+              { console.log('over 80');
+                p = candidate.location;
+                console.log(candidate.location);
+                console.log(candidate.location.latitude);
+              }
+            });
+            geometryArray.push({
+              geometry: p,
+              attributes: {
+                ObjectID: i,
+                title: library.get('name'),
+                address: library.get('address')
+              }});
+
+              totalLibraries--;
+              console.log(totalLibraries);
+              if (totalLibraries == 0)
+              {
+                console.log('return');
+                resolve(geometryArray);
+              }
+
+            });
+
+          });
+
+
+    });
+
+    promise1.then((geometry) => {
+      console.log('create layer');
+      var l = this.createLayers(geometry, fields, renderer, template);
+      map.add(l);
+    });
+
 
 
 },
 
-createGraphics: function(map)
+createGraphics: function()
 {
 
   let libraries = this.get('libraries');
@@ -137,35 +205,7 @@ createLayers: function(graphics, fields, renderer, popUpTemplate)
     return layer;
 
 
-},
-
-
-
-
-  createView: function()
-  {
-    
-    let map = this.get('map');
-
-    var l = this.getFeatureLayer(map);
-      map.add(l);
-      let view = new MapView({
-        map,
-        container: this.elementId,
-        center: [-70.25, 43.65],
-        zoom: 13
-      });
-
-      view.then(x => {
-
-        this.set('view', x);
-
-
-      });
-
-
-
-  }.observes('map')
+}
 
 
 });
