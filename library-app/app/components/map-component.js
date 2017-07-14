@@ -90,16 +90,15 @@ export default Ember.Component.extend({
     this.set('renderer', renderer);
 
 
-    const promise1 = new Promise((resolve, reject) => {
+    const createGraphics = new Promise((resolve, reject) => {
       let libraries = this.get('libraries');
-      console.log("test");
       var locator = new Locator("https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
 
       var i = 0;
       var totalLibraries = libraries.get('length');
       var geometryArray = [];
       libraries.forEach(function(library)
-      { console.log("t");
+      {
         i++;
           var address = {"SingleLine":library.get('address')};
           var params = {address: address, searchExtent: map.extent};
@@ -109,14 +108,10 @@ export default Ember.Component.extend({
             y: 43.65
           });
           locator.addressToLocations(params).then(function(candidates){
-            console.log("add");
             candidates.forEach(function(candidate){
-              console.log("candidate");
               if (candidate.score > 80)
-              { console.log('over 80');
+              {
                 p = candidate.location;
-                console.log(candidate.location);
-                console.log(candidate.location.latitude);
               }
             });
             geometryArray.push({
@@ -128,10 +123,9 @@ export default Ember.Component.extend({
               }});
 
               totalLibraries--;
-              console.log(totalLibraries);
+
               if (totalLibraries == 0)
               {
-                console.log('return');
                 resolve(geometryArray);
               }
 
@@ -142,8 +136,8 @@ export default Ember.Component.extend({
 
     });
 
-    promise1.then((geometry) => {
-      console.log('create layer');
+    createGraphics.then((geometry) => {
+
       var l = this.createLayers(geometry, fields, renderer, template);
       map.add(l);
     });
@@ -152,36 +146,7 @@ export default Ember.Component.extend({
 
 },
 
-createGraphics: function()
-{
 
-  let libraries = this.get('libraries');
-  console.log("test");
-  var locator = new Locator("https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer");
-
-  var i = 0;
-
-  var geometryArray = [];
-  libraries.forEach(function(library)
-  {
-    i++;
-
-        geometryArray.push({
-          geometry: new Point({
-            x: -70.25 + i,
-            y: 43.65
-          }),
-          attributes: {
-            ObjectID: i,
-            title: library.get('name'),
-            address: library.get('address')
-          }});
-        });
-
-  return geometryArray;
-
-
-},
 
 createLayers: function(graphics, fields, renderer, popUpTemplate)
 {
